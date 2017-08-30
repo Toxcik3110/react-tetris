@@ -35458,15 +35458,143 @@ var MainApp = function (_React$Component) {
 			mapa = [].concat(_toConsumableArray(mapa), [[].concat(buf)]);
 		}
 		_this.state = {
-			mapa: mapa
+			mapa: mapa,
+			figure: {
+				x: 0,
+				y: 0,
+				type: 0
+			}
 		};
+		console.log(mapa);
+		_this.checkLine = _this.checkLine.bind(_this);
+		var key = undefined;
+		document.body.addEventListener('keydown', function (e) {
+			key = e.key;
+		});
+		document.body.addEventListener('keyup', function (e) {
+			key = undefined;
+		});
+		var timeSpeed = 100;
+		var figure = undefined;
+		var figurePos = [0, 0];
+		var figureRot = 0;
+		var interv = setInterval(function () {
+			var mapa = _this.state.mapa;
+			// var position = [...this.state.mapaPosition];
+			var deltax = 0;
+			var deltay = 0;
+			var flag = true;
+			timeSpeed = 100;
+			switch (key) {
+				case 'ArrowRight':
+					deltax = 1;
+					break;
+				case 'ArrowLeft':
+					if (figurePos[1] > 0) deltax = -1;
+					break;
+				case 'ArrowDown':
+					timeSpeed = 10;
+					break;
+				case 'ArrowUp':
+					flag = false;
+					//rotate figure
+					if (figureRot < 3) figureRot++;else figureRot = 0;
+					reRenderFigure();
+					break;
+				default:
+					flag = false;
+					break;
+			}
+			if (flag) {
+				// this.setState({
+				// 	mapaPosition:[position[0]+deltax,position[1]+deltay]
+				// })
+			}
+			var reRenderFigure = function reRenderFigure() {};
+			if (figure === undefined) {
+				// regenerate new figure:
+				// square, T, line, Z, reverse Z, Г, reverse Г - 7 figures
+				figure = Math.floor(Math.random() * 1);
+				figurePos = [0, 5]; //start on [0,10]
+				figureRot = 0;
+				console.log('generate');
+			} else {
+				console.log('render');
+				switch (figure) {
+					case 0:
+						// square
+						switch (figureRot) {
+							case 0:
+							case 1:
+							case 2:
+							case 3: //render same way in different rotation cases
+							case 4:
+								if (figurePos[0] > 0) {
+									//clear figure on previous location
+									mapa[figurePos[0]][figurePos[1]] = 0;
+									mapa[figurePos[0] - 1][figurePos[1]] = 0;
+									mapa[figurePos[0]][figurePos[1] + 1] = 0;
+									mapa[figurePos[0] - 1][figurePos[1] + 1] = 0;
+								}
+								//fill lines with figure
+								// debugger
+								mapa[figurePos[0]][figurePos[1]] += 1;
+								mapa[figurePos[0] + 1][figurePos[1]] += 1;
+								mapa[figurePos[0]][figurePos[1] + 1] += 1;
+								mapa[figurePos[0] + 1][figurePos[1] + 1] += 1;
+								figurePos[0]++;
+								if (deltax > 0) {
+									if (figurePos[1] < mapa.length - 1) {
+										figurePos[1] += deltax;
+									}
+								} else {
+									figurePos[1] += deltax;
+								}
+								if (mapa[figurePos[0] + 1][figurePos[1]] === 1 || mapa[figurePos[0] + 1][figurePos[1] + 1] === 1) {
+									figure = undefined;
+								}
+								break;
+						}
+						break;
+				}
+				// move it down, untill it reach [1] element that below figure
+			}
+			_this.setState({
+				mapa: mapa
+			});
+		}, timeSpeed);
 		return _this;
 	}
 
 	// 20 * 10	
 
-
 	_createClass(MainApp, [{
+		key: 'checkLine',
+		value: function checkLine(N, arr) {
+			var flag = true; //check if current line full of blocks
+			for (var i = 0; i < 10; i++) {
+				if (arr[N][i] === 0) {
+					flag = false;
+				}
+			}
+
+			if (flag) {
+				//if line full of blocks, then CUT and COPY from above line recursively and PASTE to current
+				for (var i = N; i > 0; i--) {
+					for (var j = 0; j < 10; j++) {
+						if (i == N) {
+							arr[i][j] = 0;
+						} else {
+							arr[i][j] = arr[i - 1][j];
+						}
+					}
+				}
+				this.setState({
+					mapa: [].concat(_toConsumableArray(arr))
+				});
+			}
+		}
+	}, {
 		key: 'render',
 		value: function render() {
 			var mapa = this.state.mapa;
@@ -35475,14 +35603,10 @@ var MainApp = function (_React$Component) {
 				return mapa.map(function (row) {
 					return _react2.default.createElement(
 						'div',
-						{ key: (0, _nodeUuid2.default)(), className: 'cardGap cardFlex' },
+						{ key: (0, _nodeUuid2.default)(), className: 'cardGap cardFlex width100 height100' },
 						row.map(function (elem) {
-							var style = elem == 0 ? '#f00' : '#00f';
-							return _react2.default.createElement(
-								'div',
-								{ key: (0, _nodeUuid2.default)(), className: 'cardGap', style: { backgroundColor: style } },
-								'1'
-							);
+							var style = elem == 0 ? '#000' : '#00f';
+							return _react2.default.createElement('div', { key: (0, _nodeUuid2.default)(), className: 'cardGap width100 height100', style: { backgroundColor: style } });
 						})
 					);
 				});
@@ -35496,19 +35620,9 @@ var MainApp = function (_React$Component) {
 					{ className: 'cardGap3 cardFlex columnOrder centerFlex' },
 					_react2.default.createElement(
 						'div',
-						{ className: 'cardGap' },
-						_react2.default.createElement(
-							'h1',
-							null,
-							'TETRIS'
-						)
-					),
-					_react2.default.createElement(
-						'div',
-						{ className: 'cardGap5 cardFlex columnOrder' },
+						{ style: { fontSize: '0.1em' }, className: 'cardGap5 cardFlex columnOrder width100 height100' },
 						renderMapa()
-					),
-					_react2.default.createElement('div', { className: 'cardGap' })
+					)
 				),
 				_react2.default.createElement('div', { className: 'cardGap' })
 			);
